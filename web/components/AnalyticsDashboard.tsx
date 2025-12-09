@@ -7,9 +7,29 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
+type Metrics = {
+  retention?: {
+    totalUsers?: number;
+    newUsers?: number;
+    retentionRate?: number;
+  };
+  revenue?: {
+    estimatedRevenue?: number | string;
+    avgRevenuePerUser?: number | string;
+    shipmentsProcessed?: number;
+  };
+  adoption?: {
+    features?: Record<string, { adoption: string; users: number }>;
+  };
+  lastUpdated?: string;
+};
+
 const AnalyticsDashboard = () => {
-  const [metrics, setMetrics] = useState(null);
+  const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const lastUpdatedLabel = metrics?.lastUpdated
+    ? new Date(metrics.lastUpdated).toLocaleString()
+    : '';
 
   useEffect(() => {
     fetchMetrics();
@@ -19,7 +39,7 @@ const AnalyticsDashboard = () => {
     try {
       setLoading(true);
       const res = await axios.get('/api/analytics/dashboard');
-      setMetrics(res.data.metrics);
+      setMetrics(res.data.metrics as Metrics);
     } catch (err) {
       toast.error('Failed to load analytics');
     } finally {
@@ -61,7 +81,7 @@ const AnalyticsDashboard = () => {
         <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-purple-600">
           <h3 className="text-gray-600 font-semibold text-sm mb-2">Est. Revenue (30d)</h3>
           <div className="text-3xl font-bold text-purple-600">
-            ${parseFloat(metrics.revenue?.estimatedRevenue || 0).toFixed(2)}
+            ${Number(metrics.revenue?.estimatedRevenue ?? 0).toFixed(2)}
           </div>
           <p className="text-xs text-gray-500 mt-2">
             Per user: ${metrics.revenue?.avgRevenuePerUser}
@@ -101,9 +121,9 @@ const AnalyticsDashboard = () => {
       )}
 
       {/* Metadata */}
-      <div className="text-xs text-gray-500 text-center">
-        Last updated: {new Date(metrics.lastUpdated).toLocaleString()}
-      </div>
+      {lastUpdatedLabel && (
+        <div className="text-xs text-gray-500 text-center">Last updated: {lastUpdatedLabel}</div>
+      )}
     </div>
   );
 };

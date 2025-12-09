@@ -7,10 +7,23 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-const OnboardingFlow = ({ userId }) => {
-  const [status, setStatus] = useState(null);
-  const [currentStep, setCurrentStep] = useState(null);
-  const [tips, setTips] = useState(null);
+type OnboardingStatus = {
+  isComplete: boolean;
+  progress: number;
+  completedSteps: string[];
+  allSteps: string[];
+};
+
+type OnboardingTips = {
+  title: string;
+  description: string;
+  tips: string[];
+};
+
+const OnboardingFlow = ({ userId }: { userId: string }) => {
+  const [status, setStatus] = useState<OnboardingStatus | null>(null);
+  const [currentStep, setCurrentStep] = useState<string | null>(null);
+  const [tips, setTips] = useState<OnboardingTips | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,11 +34,11 @@ const OnboardingFlow = ({ userId }) => {
     try {
       setLoading(true);
       const statusRes = await axios.get('/api/onboarding/status');
-      setStatus(statusRes.data.status);
+      setStatus(statusRes.data.status as OnboardingStatus);
 
       const nextRes = await axios.get('/api/onboarding/next-step');
-      setCurrentStep(nextRes.data.nextStep);
-      setTips(nextRes.data.tips);
+      setCurrentStep(nextRes.data.nextStep as string | null);
+      setTips(nextRes.data.tips as OnboardingTips | null);
     } catch (err) {
       toast.error('Failed to load onboarding status');
     } finally {
@@ -33,7 +46,7 @@ const OnboardingFlow = ({ userId }) => {
     }
   };
 
-  const completeStep = async (step) => {
+  const completeStep = async (step: string) => {
     try {
       await axios.post('/api/onboarding/complete-step', { step });
       toast.success('Step completed!');
@@ -51,14 +64,14 @@ const OnboardingFlow = ({ userId }) => {
     return (
       <div className="p-4 bg-green-100 border border-green-400 rounded">
         <h3 className="font-bold text-green-800">🎉 Welcome to Infamous Freight!</h3>
-        <p className="text-green-700">You've completed all onboarding steps.</p>
+        <p className="text-green-700">You&apos;ve completed all onboarding steps.</p>
       </div>
     );
   }
 
   return (
     <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-4">Let's Get Started!</h2>
+      <h2 className="text-2xl font-bold mb-4">Let&apos;s Get Started!</h2>
 
       {/* Progress Bar */}
       <div className="mb-6">

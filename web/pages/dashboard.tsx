@@ -1,4 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import OnboardingFlow from "../components/OnboardingFlow";
+import ReferralProgram from "../components/ReferralProgram";
+import AnalyticsDashboard from "../components/AnalyticsDashboard";
+import styles from "../styles/dashboard.module.css";
 
 type Status = {
   ok: boolean;
@@ -10,11 +14,16 @@ type Status = {
 export default function Dashboard() {
   const [status, setStatus] = useState<Status | null>(null);
   const [loading, setLoading] = useState(true);
+  const userId = "demo-user";
+
+  const base = useMemo(
+    () => process.env.NEXT_PUBLIC_API_BASE || "http://localhost/api",
+    []
+  );
 
   useEffect(() => {
     const load = async () => {
       try {
-        const base = process.env.NEXT_PUBLIC_API_BASE || "http://localhost/api";
         const res = await fetch(base + "/health");
         const json = await res.json();
         setStatus({ ok: true, api: true, db: true, time: json.time });
@@ -25,34 +34,47 @@ export default function Dashboard() {
       }
     };
     load();
-  }, []);
+  }, [base]);
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        padding: "2rem 1.5rem",
-        background: "#050509",
-        color: "#f9fafb"
-      }}
-    >
-      <h1 style={{ fontSize: "1.8rem", marginBottom: "1rem" }}>
-        Control Tower
-      </h1>
-      {loading && <p>Loading status…</p>}
-      {!loading && status && (
-        <pre
-          style={{
-            background: "#0b0b12",
-            padding: "1rem",
-            borderRadius: "12px",
-            border: "1px solid rgba(255,255,255,0.05)",
-            fontSize: "0.9rem"
-          }}
-        >
-          {JSON.stringify(status, null, 2)}
-        </pre>
-      )}
+    <main className={styles.page}>
+      <header className={styles.header}>
+        <div>
+          <p className={styles.subtitle}>Command Center</p>
+          <h1 className={styles.title}>Control Tower</h1>
+        </div>
+        <div className={styles.statusCard}>
+          {loading && <p>Loading status…</p>}
+          {!loading && status && (
+            <div className={styles.statusStack}>
+              <span className={styles.statusPrimary}>
+                API: {status.api ? "Online" : "Offline"}
+              </span>
+              <span className={styles.statusSubtle}>
+                Database: {status.db ? "Connected" : "Unreachable"}
+              </span>
+              {status.time && <span className={styles.statusTime}>{status.time}</span>}
+            </div>
+          )}
+        </div>
+      </header>
+
+      <section className={styles.sectionGrid}>
+        <div className={styles.card}>
+          <h2 className={styles.cardTitle}>Onboarding</h2>
+          <OnboardingFlow userId={userId} />
+        </div>
+
+        <div className={styles.card}>
+          <h2 className={styles.cardTitle}>Referral Program</h2>
+          <ReferralProgram userId={userId} />
+        </div>
+      </section>
+
+      <section className={styles.analyticsCard}>
+        <h2 className={styles.cardTitle}>Analytics</h2>
+        <AnalyticsDashboard />
+      </section>
     </main>
   );
 }

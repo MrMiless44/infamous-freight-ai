@@ -8,9 +8,32 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { FiCopy, FiShare2 } from 'react-icons/fi';
 
-const ReferralProgram = ({ userId }) => {
-  const [stats, setStats] = useState(null);
-  const [tiers, setTiers] = useState([]);
+type ReferralReward = {
+  claimedAt: string;
+  amount: number;
+  status: string;
+};
+
+type ReferralStats = {
+  shareUrl: string;
+  conversions: number;
+  rewards: {
+    total: number;
+    list: ReferralReward[];
+  };
+};
+
+type ReferralTier = {
+  referrals: number;
+  reward: number;
+  description: string;
+};
+
+type SocialPlatform = 'twitter' | 'linkedin' | 'email';
+
+const ReferralProgram = ({ userId }: { userId: string }) => {
+  const [stats, setStats] = useState<ReferralStats | null>(null);
+  const [tiers, setTiers] = useState<ReferralTier[]>([]);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -26,8 +49,8 @@ const ReferralProgram = ({ userId }) => {
         axios.get('/api/referral/tiers'),
       ]);
 
-      setStats(statsRes.data.stats);
-      setTiers(tiersRes.data.tiers);
+      setStats(statsRes.data.stats as ReferralStats);
+      setTiers(tiersRes.data.tiers as ReferralTier[]);
     } catch (err) {
       toast.error('Failed to load referral data');
     } finally {
@@ -44,7 +67,7 @@ const ReferralProgram = ({ userId }) => {
     }
   };
 
-  const shareOnSocial = (platform) => {
+  const shareOnSocial = (platform: SocialPlatform) => {
     const url = encodeURIComponent(stats?.shareUrl || '');
     const text = encodeURIComponent('Join me on Infamous Freight for better logistics!');
 
