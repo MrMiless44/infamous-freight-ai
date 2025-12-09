@@ -14,6 +14,8 @@ model User {
   role      String   @default("user")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  onboarding UserOnboarding?
+  referralCode ReferralCode?
 }
 
 model Driver {
@@ -44,4 +46,42 @@ model AiEvent {
   type      String
   payload   Json
   createdAt DateTime @default(now())
+}
+
+model UserOnboarding {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  completedSteps String[] @default([])
+  startedAt      DateTime @default(now())
+  completedAt    DateTime?
+}
+
+model ReferralCode {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversions Int      @default(0)
+  createdAt   DateTime @default(now())
+  rewards     ReferralReward[]
+  conversions_detail ReferralConversion[]
+}
+
+model ReferralConversion {
+  id              String   @id @default(cuid())
+  referralCodeId  String
+  referralCode    ReferralCode @relation(fields: [referralCodeId], references: [id], onDelete: Cascade)
+  referredUserId  String
+  convertedAt     DateTime @default(now())
+  reward          String   @default("pending")
+}
+
+model ReferralReward {
+  id             String   @id @default(cuid())
+  referralCodeId String
+  referralCode   ReferralCode @relation(fields: [referralCodeId], references: [id], onDelete: Cascade)
+  amount         Float
+  claimedAt      DateTime @default(now())
+  status         String   @default("claimed")
 }

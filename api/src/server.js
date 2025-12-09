@@ -17,6 +17,9 @@ const billingRoutes = require("./routes/billing");
 const paymentsRoutes = require("./routes/payments");
 const feedbackRoutes = require("./routes/feedback");
 const adminRoutes = require("./routes/admin");
+const onboardingRoutes = require("./routes/onboarding");
+const referralRoutes = require("./routes/referral");
+const analyticsRoutes = require("./routes/analytics");
 
 const app = express();
 
@@ -66,6 +69,9 @@ app.use("/api", billingRoutes);
 app.use("/api", paymentsRoutes);
 app.use("/api", feedbackRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/onboarding", onboardingRoutes);
+app.use("/api/referral", referralRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 app.post("/internal/ai-sim", (req, res) => {
   const { command, payload, meta } = req.body || {};
