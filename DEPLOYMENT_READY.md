@@ -1,4 +1,9 @@
-# 🚀 Deployment Complete - Your Infrastructure
+Services to Deploy:
+  ✓ infamous-freight-web (Next.js Web App)
+  ✓ infamous-freight-api (Node.js Express API)
+
+Database to Create:
+  ✓ infamous-freight-db (PostgreSQL)# 🚀 Deployment Complete - Your Infrastructure
 
 Your Infamous Freight app is production-ready! Here's your deployment status:
 
@@ -84,3 +89,10 @@ Your API requires these environment variables (in `.env`):
 4. **Monitor** both services via their respective dashboards
 
 Your Stripe integration and API are production-ready! 🎉
+
+Services to Deploy:
+  ✓ infamous-freight-web (Next.js Web App)
+  ✓ infamous-freight-api (Node.js Express API)
+
+Database to Create:
+  ✓ infamous-freight-db (PostgreSQL)
