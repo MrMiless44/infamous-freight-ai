@@ -3,6 +3,7 @@ const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
 const morgan = require("morgan");
+const compression = require("compression");
 const { RateLimiterMemory } = require("rate-limiter-flexible");
 const healthRoutes = require("./routes/health");
 const aiRoutes = require("./routes/ai.commands");
@@ -34,6 +35,7 @@ const rateLimiterMiddleware = (req, res, next) => {
 
 app.use(helmet());
 app.use(cors(corsOptions));
+app.use(compression());
 app.use(express.json());
 app.use(morgan("combined"));
 app.use(rateLimiterMiddleware);

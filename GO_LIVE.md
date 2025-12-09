@@ -168,16 +168,50 @@ Click: Developers → Webhooks → Your endpoint
 Your Infamous Freight SaaS is now running in production!
 
 ### **Live URLs:**
-- 🌐 **Web Dashboard:** `https://infamous-freight-web.onrender.com`
+- 🌐 **Web Dashboard:** `https://infamo1. Web Service (Next.js)
+   - Build from: web/Dockerfile
+   - Run on: Port 3000
+   - Health check: GET /
+   - URL: https://infamous-freight-web.onrender.com
+
+2. API Service (Express.js)
+   - Build from: api/Dockerfile
+   - Run on: Port 4000
+   - Health check: GET /api/health
+   - URL: https://infamous-freight-api.onrender.com
+   - Auto-generates: JWT_SECRET, AI_SYNTHETIC_API_KEY
+   - Needs manual setup: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
+
+3. Database (PostgreSQL 15)
+   - Auto-provisioned
+   - Database: infamous_freight
+   - User: infamous
+   - Auto-linked to API
+   - Connection string: Auto-generatedus-freight-web.onrender.com`
 - 🔌 **API Server:** `https://infamous-freight-api.onrender.com`
 - 📊 **Health Check:** `https://infamous-freight-api.onrender.com/api/health`
 
 ### **Services Running:**
-- ✅ Web application (Next.js)
-- ✅ API server (Express.js)
-- ✅ PostgreSQL database
-- ✅ Stripe webhooks
-- ✅ Health monitoring
+1. Web Service (Next.js)
+   - Build from: web/Dockerfile
+   - Run on: Port 3000
+   - Health check: GET /
+   - URL: https://infamous-freight-web.onrender.com
+
+2. API Service (Express.js)
+   - Build from: api/Dockerfile
+   - Run on: Port 4000
+   - Health check: GET /api/health
+   - URL: https://infamous-freight-api.onrender.com
+   - Auto-generates: JWT_SECRET, AI_SYNTHETIC_API_KEY
+   - Needs manual setup: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
+
+3. Database (PostgreSQL 15)
+   - Auto-provisioned
+   - Database: infamous_freight
+   - User: infamous
+   - Auto-linked to API
+   - Connection string: Auto-generated
 
 ---
 

@@ -1,0 +1,8 @@
+When ready for real payments:
+1. Get live Stripe keys (sk_live_...)
+2. Create new webhook in Stripe for live mode
+3. Update STRIPE_SECRET_KEY in Render
+4. Update STRIPE_WEBHOOK_SECRET in Render
+5. Update webhook URL in Stripe
+6. Test with real payment
+7. Monitor first transactions closely
