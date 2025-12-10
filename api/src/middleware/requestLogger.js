@@ -3,8 +3,6 @@
  * Enhanced logging with request IDs for tracing distributed systems
  */
 
-const { v4: uuidv4 } = require('uuid');
-
 const generateRequestId = () => {
   return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 };

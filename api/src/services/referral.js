@@ -3,7 +3,6 @@
  * Manages referral program and tracking
  */
 
-const { v4: uuidv4 } = require('uuid');
 const prisma = require('../lib/prisma');
 
 class ReferralService {
