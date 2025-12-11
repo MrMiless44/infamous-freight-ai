@@ -1,22 +1,7 @@
 # Infæmous Freight Enterprises - Production Deployment
+# API Service Only - Web app should be deployed separately via Vercel or another Render service
 
 services:
-- type: web
-  name: infamous-freight-web
-  runtime: docker
-  dockerfilePath: ./web/Dockerfile
-  envVars:
-  - key: NODE_ENV
-    value: production
-  - key: NEXT_PUBLIC_APP_NAME
-    value: Infæmous Freight
-  - key: NEXT_PUBLIC_API_BASE
-    sync: false
-  - key: PORT
-    value: 3000
-  healthCheckPath: /
-  plan: starter
-
 - type: web
   name: infamous-freight-api
   runtime: docker
