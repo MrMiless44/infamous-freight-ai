@@ -93,8 +93,8 @@ app.post("/internal/ai-sim", (req, res) => {
 const port = process.env.PORT || 4000;
 
 if (require.main === module) {
-  app.listen(port, () => {
-    console.log(`Infæmous Freight API listening on ${port}`);
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`Infæmous Freight API listening on port ${port}`);
   });
 }
 
