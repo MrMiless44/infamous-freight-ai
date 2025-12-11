@@ -1,4 +1,6 @@
-# Stripe Production Configuration Guide
+STRIPE_SECRET_KEY=sk_live_51SI7HQ...
+STRIPE_PUBLISHABLE_KEY=pk_live_51SI7HQ...
+STRIPE_WEBHOOK_SECRET=whsec_test_bd...# Stripe Production Configuration Guide
 
 ## Step 1: Get Your Stripe Production Keys
 

@@ -1,5 +1,4 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
 const {
   getPricingTiers,
   calculateUsageCost,
@@ -7,9 +6,9 @@ const {
   getOrCreateStripeCustomer,
   recordUsage,
 } = require("../services/payments");
+const prisma = require("../lib/prisma");
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 /**
  * GET /api/billing/pricing

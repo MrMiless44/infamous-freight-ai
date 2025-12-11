@@ -7,7 +7,7 @@
     "dev": "node src/server.js",
     "prestart": "node scripts/startup.js",
     "start": "NODE_ENV=production node src/server.js",
-    "test": "jest",
+    "test": "CONSOLE_NINJA_DISABLED=true MOCK_PRISMA=true NODE_ENV=test jest --runInBand",
     "prisma:generate": "npx prisma generate",
     "prisma:migrate": "npx prisma migrate deploy",
     "validate:env": "node scripts/env.validation.js"
