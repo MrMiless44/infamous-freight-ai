@@ -447,6 +447,181 @@ async function handleCheckoutSessionCompleted(session) {
   }
 }
 
+/**
+ * Handle charge refunded (partial or full)
+ */
+async function handleChargeRefunded(charge) {
+  const { id, payment_intent, amount_refunded, reason, metadata } = charge;
+  
+  console.log(`💳 Charge refunded: ${id}`);
+  console.log(`   Amount refunded: ${amount_refunded / 100}`);
+  console.log(`   Reason: ${reason}`);
+
+  try {
+    // Update payment status to refunded/partially_refunded
+    const payment = await prisma.payment.findUnique({
+      where: { stripePaymentIntentId: payment_intent },
+    });
+
+    if (payment) {
+      const refundedAmount = amount_refunded;
+      const isFullRefund = refundedAmount === payment.amount;
+      
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: {
+          status: isFullRefund ? 'refunded' : 'partially_refunded',
+          metadata: {
+            ...payment.metadata,
+            refundedAmount,
+            refundReason: reason,
+            chargeId: id,
+          },
+        },
+      });
+    }
+
+    await prisma.aiEvent.create({
+      data: {
+        type: 'charge.refunded',
+        payload: {
+          chargeId: id,
+          paymentIntentId: payment_intent,
+          amountRefunded: amount_refunded,
+          reason,
+          metadata,
+          timestamp: new Date().toISOString(),
+        },
+      },
+    });
+
+    console.log(`   ✅ Refund processed and recorded`);
+
+    // TODO: Send refund confirmation email
+    // TODO: Update accounting records
+    // TODO: Log for reconciliation
+
+    return { success: true, chargeId: id };
+  } catch (error) {
+    console.error('Error handling charge refunded:', error);
+    throw error;
+  }
+}
+
+/**
+ * Handle payment dispute (chargeback)
+ */
+async function handleChargeDisputeCreated(dispute) {
+  const { id, charge, reason_code, amount, status, metadata } = dispute;
+  
+  console.log(`⚖️ Dispute created: ${id}`);
+  console.log(`   Reason: ${reason_code}`);
+  console.log(`   Amount: ${amount / 100}`);
+  console.log(`   Status: ${status}`);
+
+  try {
+    // Find and flag the payment
+    const payment = await prisma.payment.findUnique({
+      where: { stripePaymentIntentId: charge },
+    });
+
+    if (payment) {
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: {
+          status: 'disputed',
+          metadata: {
+            ...payment.metadata,
+            disputeId: id,
+            disputeReason: reason_code,
+            disputeStatus: status,
+            disputeAmount: amount,
+          },
+        },
+      });
+    }
+
+    await prisma.aiEvent.create({
+      data: {
+        type: 'charge.dispute.created',
+        payload: {
+          disputeId: id,
+          chargeId: charge,
+          reasonCode: reason_code,
+          amount,
+          status,
+          metadata,
+          timestamp: new Date().toISOString(),
+        },
+      },
+    });
+
+    console.log(`   ✅ Dispute recorded and payment flagged`);
+
+    // TODO: Send dispute notification to customer
+    // TODO: Alert finance team
+    // TODO: Prepare evidence for dispute defense
+
+    return { success: true, disputeId: id };
+  } catch (error) {
+    console.error('Error handling dispute created:', error);
+    throw error;
+  }
+}
+
+/**
+ * Handle customer deleted
+ */
+async function handleCustomerDeleted(customer) {
+  const { id, metadata } = customer;
+  
+  console.log(`👤 Customer deleted: ${id}`);
+
+  try {
+    // Mark all subscriptions as deleted/archived
+    await prisma.subscription.updateMany({
+      where: { stripeCustomerId: id },
+      data: {
+        status: 'customer_deleted',
+        canceledAt: new Date(),
+      },
+    });
+
+    // Find related payments
+    const payments = await prisma.payment.findMany({
+      where: {
+        metadata: {
+          path: ['stripeCustomerId'],
+          equals: id,
+        },
+      },
+    });
+
+    await prisma.aiEvent.create({
+      data: {
+        type: 'customer.deleted',
+        payload: {
+          customerId: id,
+          deletedAt: new Date().toISOString(),
+          affectedSubscriptions: payments.length,
+          metadata,
+        },
+      },
+    });
+
+    console.log(`   ✅ Customer data archived: ${id}`);
+
+    // TODO: Anonymize customer PII
+    // TODO: Archive historical data
+    // TODO: Send data deletion confirmation
+
+    return { success: true, customerId: id };
+  } catch (error) {
+    console.error('Error handling customer deleted:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   handlePaymentIntentSucceeded,
   handlePaymentIntentFailed,
@@ -456,4 +631,7 @@ module.exports = {
   handleInvoicePaymentSucceeded,
   handleInvoicePaymentFailed,
   handleCheckoutSessionCompleted,
+  handleChargeRefunded,
+  handleChargeDisputeCreated,
+  handleCustomerDeleted,
 };

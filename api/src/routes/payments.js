@@ -18,6 +18,9 @@ const {
   handleInvoicePaymentSucceeded,
   handleInvoicePaymentFailed,
   handleCheckoutSessionCompleted,
+  handleChargeRefunded,
+  handleChargeDisputeCreated,
+  handleCustomerDeleted,
 } = require("../services/stripe-webhook-handlers");
 
 const router = express.Router();
@@ -145,6 +148,18 @@ router.post("/webhooks/stripe", async (req, res) => {
 
       case "checkout.session.completed":
         result = await handleCheckoutSessionCompleted(event.data.object);
+        break;
+
+      case "charge.refunded":
+        result = await handleChargeRefunded(event.data.object);
+        break;
+
+      case "charge.dispute.created":
+        result = await handleChargeDisputeCreated(event.data.object);
+        break;
+
+      case "customer.deleted":
+        result = await handleCustomerDeleted(event.data.object);
         break;
 
       default:
