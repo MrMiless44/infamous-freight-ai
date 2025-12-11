@@ -8,6 +8,11 @@ const run = (label, cmd, opts = {}) => {
   execSync(cmd, { stdio: "inherit", cwd, env: process.env, ...opts });
 };
 
+const sleepMs = (ms) => {
+  // Use Atomics.wait to avoid relying on external sleep binaries.
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+};
+
 const runMigrationsWithRetry = () => {
   const attempts = 5;
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
@@ -17,7 +22,7 @@ const runMigrationsWithRetry = () => {
     } catch (err) {
       if (attempt === attempts) throw err;
       console.warn(`Prisma migrate failed (attempt ${attempt}/${attempts}). Retrying in 3s...`);
-      execSync("sleep 3", { stdio: "inherit", cwd });
+      sleepMs(3000);
     }
   }
 };

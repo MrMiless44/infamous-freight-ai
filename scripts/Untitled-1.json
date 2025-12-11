@@ -1,0 +1,12 @@
+{
+  "received": true,
+  "result": {
+    "success": true,
+    "paymentIntentId": "pi_...",
+    "payment": {
+      "id": "...",
+      "amount": 1099,
+      "status": "succeeded"
+    }
+  }
+}

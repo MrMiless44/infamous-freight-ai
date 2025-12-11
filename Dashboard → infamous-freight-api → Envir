@@ -1,0 +1,2 @@
+Dashboard → infamous-freight-api → Environment
+STRIPE_WEBHOOK_SECRET=whsec_[get_from_stripe]

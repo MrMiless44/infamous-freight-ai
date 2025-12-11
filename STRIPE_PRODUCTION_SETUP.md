@@ -179,3 +179,59 @@ Your app tracks:
 - **Stripe Docs**: https://stripe.com/docs
 - **API Reference**: https://stripe.com/docs/api
 - **Status**: https://status.stripe.com
+
+---
+
+# ⚙️ Webhook Server Example (for reference)
+
+from flask import Flask, request, jsonify
+import stripe
+import json
+
+app = Flask(__name__)
+stripe.api_key = 'sk_test_123'
+
+@app.route('/webhooks/stripe', methods=['POST'])
+def stripe_webhook():
+    payload = request.data
+    sig_header = request.headers.get('stripe-signature')
+    endpoint_secret = 'whsec_...'  # Your webhook signing secret
+    
+    try:
+        # Verify the event came from Stripe
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, endpoint_secret
+        )
+        
+        # Handle specific events
+        if event['type'] == 'payment_intent.succeeded':
+            payment_intent = event['data']['object']
+            print(f"Payment for {payment_intent['amount']} succeeded!")
+            # Fulfill the order here
+            
+        elif event['type'] == 'invoice.payment_succeeded':
+            invoice = event['data']['object']
+            print(f"Invoice {invoice['id']} paid successfully!")
+            # Provision services or update subscription status
+            
+        elif event['type'] == 'customer.subscription.created':
+            subscription = event['data']['object']
+            print(f"New subscription {subscription['id']} created!")
+            # Record the new subscription
+        
+        # Add more event types as needed
+        else:
+            print(f"Unhandled event type {event['type']}")
+            
+        return jsonify(success=True)
+    
+    except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
+        print('⚠️ Webhook signature verification failed.')
+        return jsonify(success=False), 400
+    except Exception as e:
+        print(f'⚠️ Webhook error: {str(e)}')
+        return jsonify(success=False), 400
+
+if __name__ == '__main__':
+    app.run(port=4242)

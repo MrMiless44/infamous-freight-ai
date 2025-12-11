@@ -57,6 +57,11 @@ app.use(helmet());
 app.use(cors(corsOptions));
 app.use(compression());
 app.use(requestLogger);
+// Stripe webhook needs raw body for signature verification
+app.use(
+  "/api/webhooks/stripe",
+  express.raw({ type: "application/json" })
+);
 app.use(express.json());
 app.use(morgan("combined"));
 app.use(contextMiddleware);

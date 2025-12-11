@@ -87,20 +87,37 @@ function buildStripeWebhook(eventPayload, signature) {
   const client = getStripeClient();
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-  if (!client || !webhookSecret) {
+  if (!client) {
+    console.warn("Stripe client not configured");
     return { type: "unverified", data: eventPayload };
   }
 
-  // NOTE: Express json middleware loses access to the raw body, so this
-  // fallback trusts the parsed payload. For production-grade signature
-  // verification, add express.raw middleware before json parsing.
+  if (!webhookSecret) {
+    console.warn("STRIPE_WEBHOOK_SECRET not set - webhook signature verification disabled");
+    // In development, allow unverified webhooks (not recommended for production)
+    try {
+      const parsedPayload = Buffer.isBuffer(eventPayload) 
+        ? JSON.parse(eventPayload.toString()) 
+        : eventPayload;
+      return parsedPayload;
+    } catch (err) {
+      return { type: "invalid", error: "Failed to parse payload", data: eventPayload };
+    }
+  }
+
   try {
+    // Use raw body buffer for signature verification
+    const payload = Buffer.isBuffer(eventPayload) 
+      ? eventPayload 
+      : Buffer.from(JSON.stringify(eventPayload));
+      
     return client.webhooks.constructEvent(
-      Buffer.from(JSON.stringify(eventPayload)),
+      payload,
       signature,
       webhookSecret
     );
   } catch (err) {
+    console.error("Webhook signature verification failed:", err.message);
     return { type: "invalid", error: err.message, data: eventPayload };
   }
 }
