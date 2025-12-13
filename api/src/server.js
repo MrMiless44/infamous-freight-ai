@@ -10,6 +10,7 @@ const cacheService = require("./services/cache");
 const metricsService = require("./services/metrics");
 const { requestLogger, contextMiddleware } = require("./middleware/requestLogger");
 const { cacheMiddleware } = require("./middleware/cache");
+const ipAllowlist = require("./middleware/ipAllowlist");
 const healthRoutes = require("./routes/health");
 const aiRoutes = require("./routes/ai.commands");
 const aiMaintenanceRoutes = require("./routes/ai.maintenance");
@@ -31,7 +32,12 @@ cacheService.initialize();
 
 app.set("trust proxy", 1);
 
-const allowedOrigins = (process.env.CORS_ORIGINS || "*")
+const defaultOrigins = [
+  "http://localhost:3000",
+  "https://infamous-freight-web.onrender.com"
+];
+
+const allowedOrigins = (process.env.CORS_ORIGINS || defaultOrigins.join(","))
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
@@ -57,6 +63,7 @@ app.use(helmet());
 app.use(cors(corsOptions));
 app.use(compression());
 app.use(requestLogger);
+app.use(ipAllowlist);
 // Stripe webhook needs raw body for signature verification
 app.use(
   "/api/webhooks/stripe",

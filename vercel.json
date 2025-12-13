@@ -8,6 +8,10 @@
   ],
   "routes": [
     {
+      "src": "/api/proxy/(.*)",
+      "dest": "web/api/proxy/$1"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "https://infamous-freight-api.onrender.com/api/$1"
     },

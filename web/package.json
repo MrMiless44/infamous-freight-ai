@@ -6,13 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "smoke:proxy": "node scripts/proxy-smoke.js",
+    "test:proxy": "node scripts/proxy-test.js",
     "lint": "eslint \"./pages/**/*.{ts,tsx,js,jsx}\" \"./components/**/*.{ts,tsx,js,jsx}\" \"./hooks/**/*.{ts,tsx,js,jsx}\""
   },
   "dependencies": {
     "@sentry/react": "^10.29.0",
     "axios": "^1.13.2",
     "ioredis": "^5.8.2",
-    "next": "14.2.32",
+    "next": "^14.2.35",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-ga4": "^2.1.0",

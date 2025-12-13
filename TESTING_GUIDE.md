@@ -10,6 +10,35 @@ This guide covers testing all core features: authentication, payments, analytics
 
 ### 1.1 Prerequisites
 ```bash
+# Copy env template for the web app (edit as needed)
+cp web/.env.local.example web/.env.local
+
+# Key vars for local dev
+# API_BASE_URL=http://localhost:4000/api
+# AI_SYNTHETIC_API_KEY=<matches API>
+# NEXT_PUBLIC_API_KEY=<optional demo key>
+```
+
+### 1.2 Smoke check the Next proxy (requires `next dev` running)
+```bash
+cd web
+npm run dev &
+SMOKE_BASE=http://localhost:3000 npm run smoke:proxy
+```
+
+Tip: After obtaining a JWT, you can set it in the browser console so all widget calls authorize:
+```js
+window.setAuthToken('<jwt_here>')
+```
+
+### 1.3 Proxy integration test (expects API running)
+```bash
+cd web
+SMOKE_BASE=http://localhost:3000 npm run test:proxy
+```
+
+### 1.3 Services
+```bash
 # Ensure containers are running
 docker compose up -d
 
@@ -18,7 +47,7 @@ curl http://localhost:4000/api/health
 curl http://localhost:3000
 ```
 
-### 1.2 Test Users
+### 1.4 Test Users
 Create test users in PostgreSQL:
 ```sql
 -- Connect to container

@@ -32,11 +32,14 @@ class AnalyticsService {
         distinct: ['createdAt'],
       });
 
+      const retentionRate =
+        totalUsers > 0 ? ((newUsers / totalUsers) * 100).toFixed(2) : '0.00';
+
       return {
         period: `${days} days`,
         newUsers,
         totalUsers,
-        retentionRate: ((newUsers / totalUsers) * 100).toFixed(2),
+        retentionRate,
         activeCount: activeUsers.length,
       };
     } catch (err) {
@@ -109,7 +112,8 @@ class AnalyticsService {
         select: { id: true },
       });
 
-      const revenuePerUser = users.length > 0 ? (totalRevenue / users.length).toFixed(2) : 0;
+      const revenuePerUser =
+        users.length > 0 ? (totalRevenue / users.length).toFixed(2) : '0.00';
 
       return {
         period: `${days} days`,
@@ -135,10 +139,11 @@ class AnalyticsService {
       });
 
       const driverUsers = await prisma.driver.count();
+      const safeTotal = totalUsers || 1; // avoid division by zero for mock percentages
 
       return {
         totalUsers,
-        shipmentsFeatureAdoption: ((shipmentUsers / totalUsers) * 100).toFixed(2),
+        shipmentsFeatureAdoption: ((shipmentUsers / safeTotal) * 100).toFixed(2),
         driversAdopted: driverUsers,
         features: {
           shipments: {

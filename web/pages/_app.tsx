@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import type { AppProps } from "next/app";
 import axios from "axios";
 import { Toaster } from "react-hot-toast";
+import "../lib/sentry";
 
 const apiBase = process.env.NEXT_PUBLIC_API_BASE || "/api";
 

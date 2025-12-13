@@ -3,9 +3,11 @@
  * Display key metrics and analytics
  */
 
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import toast from 'react-hot-toast';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import toast from "react-hot-toast";
+import apiClient from "../lib/apiClient";
+import styles from "../styles/dashboardWidgets.module.css";
 
 type Metrics = {
   retention?: {
@@ -24,106 +26,93 @@ type Metrics = {
   lastUpdated?: string;
 };
 
-const AnalyticsDashboard = () => {
+const AnalyticsDashboard = ({ onError }: { onError?: (msg: string) => void }) => {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [loading, setLoading] = useState(true);
   const lastUpdatedLabel = metrics?.lastUpdated
     ? new Date(metrics.lastUpdated).toLocaleString()
     : '';
 
-  useEffect(() => {
-    fetchMetrics();
-  }, []);
-
   const fetchMetrics = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('/api/analytics/dashboard');
+      const res = await apiClient.get('/analytics/dashboard');
       setMetrics(res.data.metrics as Metrics);
     } catch (err) {
-      toast.error('Failed to load analytics');
+      const msg = axios.isAxiosError(err) && err.response?.status === 401
+        ? 'Please set a valid auth token or API key to view analytics.'
+        : 'Failed to load analytics';
+      toast.error(msg);
+      onError?.(msg);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchMetrics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   if (loading) {
-    return <div className="p-4 text-center">Loading analytics...</div>;
+    return <div className={styles.loadingCard}>Loading analytics...</div>;
   }
 
   if (!metrics) {
-    return <div className="p-4 text-center">No data available</div>;
+    return <div className={styles.loadingCard}>No data available</div>;
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-8">Analytics Dashboard</h1>
-
-      {/* Key Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {/* User Metrics */}
-        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-600">
-          <h3 className="text-gray-600 font-semibold text-sm mb-2">Total Users</h3>
-          <div className="text-3xl font-bold text-blue-600">{metrics.retention?.totalUsers || 0}</div>
-          <p className="text-xs text-gray-500 mt-2">All-time signups</p>
+    <div className={styles.section}>
+      <div className={styles.grid}>
+        <div className={styles.statCard}>
+          <p className={styles.statLabel}>Total Users</p>
+          <p className={styles.statValue}>{metrics.retention?.totalUsers || 0}</p>
+          <p className={styles.muted}>All-time signups</p>
         </div>
 
-        {/* Active Users */}
-        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-600">
-          <h3 className="text-gray-600 font-semibold text-sm mb-2">New Users (30d)</h3>
-          <div className="text-3xl font-bold text-green-600">{metrics.retention?.newUsers || 0}</div>
-          <p className="text-xs text-gray-500 mt-2">
-            Retention: {metrics.retention?.retentionRate}%
-          </p>
+        <div className={styles.statCard}>
+          <p className={styles.statLabel}>New Users (30d)</p>
+          <p className={styles.statValue}>{metrics.retention?.newUsers || 0}</p>
+          <p className={styles.muted}>Retention: {metrics.retention?.retentionRate}%</p>
         </div>
 
-        {/* Revenue */}
-        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-purple-600">
-          <h3 className="text-gray-600 font-semibold text-sm mb-2">Est. Revenue (30d)</h3>
-          <div className="text-3xl font-bold text-purple-600">
+        <div className={styles.statCard}>
+          <p className={styles.statLabel}>Est. Revenue (30d)</p>
+          <p className={styles.statValue}>
             ${Number(metrics.revenue?.estimatedRevenue ?? 0).toFixed(2)}
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            Per user: ${metrics.revenue?.avgRevenuePerUser}
           </p>
+          <p className={styles.muted}>Per user: ${metrics.revenue?.avgRevenuePerUser}</p>
         </div>
 
-        {/* Shipments */}
-        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-orange-600">
-          <h3 className="text-gray-600 font-semibold text-sm mb-2">Shipments (30d)</h3>
-          <div className="text-3xl font-bold text-orange-600">{metrics.revenue?.shipmentsProcessed || 0}</div>
-          <p className="text-xs text-gray-500 mt-2">Monthly activity</p>
+        <div className={styles.statCard}>
+          <p className={styles.statLabel}>Shipments (30d)</p>
+          <p className={styles.statValue}>{metrics.revenue?.shipmentsProcessed || 0}</p>
+          <p className={styles.muted}>Monthly activity</p>
         </div>
       </div>
 
-      {/* Feature Adoption */}
       {metrics.adoption && (
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-2xl font-bold mb-4">Feature Adoption</h2>
-          <div className="space-y-4">
+        <div className={styles.listStack}>
+          <h2 className={styles.heading}>Feature Adoption</h2>
+          <div className={styles.listStack}>
             {Object.entries(metrics.adoption.features || {}).map(([feature, data]) => (
-              <div key={feature}>
-                <div className="flex justify-between mb-2">
-                  <span className="font-semibold capitalize">{feature}</span>
-                  <span className="text-gray-600">{data.adoption}</span>
+              <div key={feature} className={styles.featureRow}>
+                <div className={styles.progressMeta}>
+                  <span className={styles.capitalize}>{feature}</span>
+                  <span className={styles.muted}>{data.adoption}</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div
-                    className="bg-blue-600 h-3 rounded-full transition-all"
-                    style={{ width: data.adoption }}
-                  ></div>
+                <div className={styles.featureBar}>
+                  <div className={styles.featureFill} style={{ width: data.adoption }} />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">{data.users} users</p>
+                <p className={styles.muted}>{data.users} users</p>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Metadata */}
-      {lastUpdatedLabel && (
-        <div className="text-xs text-gray-500 text-center">Last updated: {lastUpdatedLabel}</div>
-      )}
+      {lastUpdatedLabel && <div className={styles.meta}>Last updated: {lastUpdatedLabel}</div>}
     </div>
   );
 };
