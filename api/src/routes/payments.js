@@ -109,10 +109,13 @@ router.post("/webhooks/stripe", async (req, res) => {
 
   try {
     const event = buildStripeWebhook(req.body, signature);
-    
-    if (event.type === "invalid") {
-      console.error("Invalid Stripe webhook signature:", event.error);
-      return res.status(400).json({ error: "Invalid signature" });
+    const invalidMessage = event.type === "invalid"
+      ? event.error || "Invalid signature"
+      : "Unverified webhook payload";
+
+    if (event.type === "invalid" || event.type === "unverified") {
+      console.error("Rejected Stripe webhook:", invalidMessage);
+      return res.status(400).json({ error: invalidMessage });
     }
 
     // Handle the event with dedicated handlers
@@ -171,8 +174,7 @@ router.post("/webhooks/stripe", async (req, res) => {
     res.json({ received: true, result });
   } catch (err) {
     console.error("Stripe webhook error:", err);
-    // Still return 200 to prevent retries for non-critical errors
-    res.status(200).json({ received: true, error: err.message });
+    res.status(400).json({ received: false, error: err.message });
   }
 });
 

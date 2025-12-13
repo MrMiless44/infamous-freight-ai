@@ -86,20 +86,29 @@ async function capturePayPalOrder(orderId) {
 function buildStripeWebhook(eventPayload, signature) {
   const client = getStripeClient();
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const isProd = (process.env.NODE_ENV || "").toLowerCase() === "production";
 
   if (!client) {
-    console.warn("Stripe client not configured");
+    const msg = "Stripe client not configured";
+    if (isProd) {
+      throw new Error(msg);
+    }
+    console.warn(msg);
     return { type: "unverified", data: eventPayload };
   }
 
   if (!webhookSecret) {
-    console.warn("STRIPE_WEBHOOK_SECRET not set - webhook signature verification disabled");
-    // In development, allow unverified webhooks (not recommended for production)
+    const msg = "STRIPE_WEBHOOK_SECRET not set - webhook signature verification disabled";
+    if (isProd) {
+      throw new Error(msg);
+    }
+    console.warn(msg);
+    // In non-production, allow unverified webhooks (not recommended for production)
     try {
-      const parsedPayload = Buffer.isBuffer(eventPayload) 
-        ? JSON.parse(eventPayload.toString()) 
+      const parsedPayload = Buffer.isBuffer(eventPayload)
+        ? JSON.parse(eventPayload.toString())
         : eventPayload;
-      return parsedPayload;
+      return { type: "unverified", data: parsedPayload };
     } catch (err) {
       return { type: "invalid", error: "Failed to parse payload", data: eventPayload };
     }

@@ -4,13 +4,21 @@
  */
 
 const prisma = require('../lib/prisma');
+const STEPS = [
+  'profile_complete',
+  'payment_added',
+  'first_shipment',
+  'integration_setup',
+];
 
 class OnboardingService {
   async initializeUserOnboarding(userId) {
     try {
-      // Create onboarding record
-      const onboarding = await prisma.userOnboarding.create({
-        data: {
+      // Create onboarding record (idempotent for existing users)
+      const onboarding = await prisma.userOnboarding.upsert({
+        where: { userId },
+        update: {},
+        create: {
           userId,
           completedSteps: [],
           startedAt: new Date(),
@@ -53,29 +61,18 @@ class OnboardingService {
 
   async getOnboardingStatus(userId) {
     try {
-      const onboarding = await prisma.userOnboarding.findUnique({
-        where: { userId },
-      });
-
-      if (!onboarding) {
-        return null;
-      }
-
-      const steps = [
-        'profile_complete',
-        'payment_added',
-        'first_shipment',
-        'integration_setup',
-      ];
+      const onboarding =
+        (await prisma.userOnboarding.findUnique({ where: { userId } })) ||
+        (await this.initializeUserOnboarding(userId));
 
       const progress = onboarding.completedSteps?.length || 0;
-      const percentage = Math.round((progress / steps.length) * 100);
+      const percentage = Math.round((progress / STEPS.length) * 100);
 
       return {
         completedSteps: onboarding.completedSteps || [],
-        allSteps: steps,
+        allSteps: STEPS,
         progress: percentage,
-        isComplete: progress === steps.length,
+        isComplete: progress === STEPS.length,
       };
     } catch (err) {
       console.error('Get onboarding status error:', err.message);
@@ -87,18 +84,7 @@ class OnboardingService {
     try {
       const status = await this.getOnboardingStatus(userId);
 
-      if (!status) {
-        return 'profile_complete';
-      }
-
-      const steps = [
-        'profile_complete',
-        'payment_added',
-        'first_shipment',
-        'integration_setup',
-      ];
-
-      for (const step of steps) {
+      for (const step of STEPS) {
         if (!status.completedSteps.includes(step)) {
           return step;
         }

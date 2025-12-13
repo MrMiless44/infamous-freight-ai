@@ -33,7 +33,7 @@ router.get('/metrics', authMiddleware, adminOnly, async (req, res) => {
  * GET /api/admin/health/full
  * Detailed health status with all checks
  */
-router.get('/health/full', async (req, res) => {
+router.get('/health/full', authMiddleware, adminOnly, async (req, res) => {
   try {
     const checks = {
       timestamp: new Date().toISOString(),

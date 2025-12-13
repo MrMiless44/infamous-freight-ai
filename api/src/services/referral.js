@@ -53,6 +53,18 @@ class ReferralService {
         return null;
       }
 
+      if (referral.userId === newUserId) {
+        throw new Error('Self-referrals are not allowed');
+      }
+
+      const existingConversion = await prisma.referralConversion.findFirst({
+        where: { referredUserId: newUserId },
+      });
+
+      if (existingConversion) {
+        throw new Error('Referral already recorded for this user');
+      }
+
       // Record the conversion
       await prisma.referralCode.update({
         where: { code: referralCode },
