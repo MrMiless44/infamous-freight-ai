@@ -2,12 +2,95 @@ name: Build Docker Images
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "master" ]
   pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      push:
+        description: "Push built images to GHCR"
+        required: false
+        default: "false"
+      tag:
+        description: "Additional image tag (e.g. v1.2.3)"
+        required: false
+        default: ""
+      provenance:
+        description: "Enable provenance attestations"
+        required: false
+        default: "false"
+      sbom:
+        description: "Generate SBOMs"
+        required: false
+        default: "false"
+
+concurrency:
+  group: docker-build-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
+  prep:
     runs-on: ubuntu-latest
+    outputs:
+      registry: ${{ steps.vars.outputs.registry }}
+      owner_lower: ${{ steps.vars.outputs.owner_lower }}
+      push_enabled: ${{ steps.vars.outputs.push_enabled }}
+      extra_tag: ${{ steps.vars.outputs.extra_tag }}
+      provenance_enabled: ${{ steps.vars.outputs.provenance_enabled }}
+      trivy_week: ${{ steps.vars.outputs.trivy_week }}
+      sbom_enabled: ${{ steps.vars.outputs.sbom_enabled }}
+    steps:
+      - name: Compute workflow variables
+        id: vars
+        env:
+          INPUT_PUSH: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.push || 'false' }}
+          INPUT_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || '' }}
+          INPUT_PROVENANCE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.provenance || 'false' }}
+          INPUT_SBOM: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.sbom || 'false' }}
+        run: |
+          owner_lower="${GITHUB_REPOSITORY_OWNER,,}"
+          push_flag="false"
+          provenance_flag="false"
+          sbom_flag="false"
+          week="$(date +%G%V)"
+          if [[ "$GITHUB_REF" == "refs/heads/main" || "$INPUT_PUSH" == "true" ]]; then
+            push_flag="true"
+          fi
+          if [[ "$INPUT_PROVENANCE" == "true" ]]; then
+            provenance_flag="true"
+          fi
+          if [[ "$INPUT_SBOM" == "true" ]]; then
+            sbom_flag="true"
+          fi
+          echo "owner_lower=$owner_lower" >> "$GITHUB_OUTPUT"
+          echo "push_enabled=$push_flag" >> "$GITHUB_OUTPUT"
+          echo "extra_tag=$INPUT_TAG" >> "$GITHUB_OUTPUT"
+          echo "provenance_enabled=$provenance_flag" >> "$GITHUB_OUTPUT"
+          echo "sbom_enabled=$sbom_flag" >> "$GITHUB_OUTPUT"
+          echo "trivy_week=$week" >> "$GITHUB_OUTPUT"
+          echo "registry=ghcr.io" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: prep
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY: ${{ needs.prep.outputs.registry }}
+      OWNER_LOWER: ${{ needs.prep.outputs.owner_lower }}
+      PUSH_ENABLED: ${{ needs.prep.outputs.push_enabled }}
+      EXTRA_TAG: ${{ needs.prep.outputs.extra_tag }}
+      PROVENANCE_ENABLED: ${{ needs.prep.outputs.provenance_enabled }}
+      SBOM_ENABLED: ${{ needs.prep.outputs.sbom_enabled }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: api
+            context: ./api
+            image: infamous-freight-api
+          - name: web
+            context: ./web
+            image: infamous-freight-web
 
     steps:
       - name: Checkout
@@ -15,24 +98,136 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork != true
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build API image
-        uses: docker/build-push-action@v5
+      - name: Docker metadata (${{ matrix.name }})
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          context: ./api
-          push: false
-          tags: ghcr.io/${{ github.repository_owner }}/infamous-freight-api:test
+          images: ${{ env.REGISTRY }}/${{ env.OWNER_LOWER }}/${{ matrix.image }}
+          tags: |
+            type=raw,value=test
+            type=raw,value=${{ env.EXTRA_TAG }},enable=${{ env.EXTRA_TAG != '' }}
+            type=sha,format=long
+            type=ref,event=branch
+            type=ref,event=pr
 
-      - name: Build WEB image
+      - name: Build ${{ matrix.name }} image
+        id: build_image
         uses: docker/build-push-action@v5
         with:
-          context: ./web
-          push: false
-          tags: ghcr.io/${{ github.repository_owner }}/infamous-freight-web:test
+          context: ${{ matrix.context }}
+          push: ${{ env.PUSH_ENABLED == 'true' }}
+          load: ${{ env.PUSH_ENABLED != 'true' }}
+          platforms: ${{ env.PUSH_ENABLED == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.name }}-${{ github.ref_name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}-${{ github.ref_name }}
+          provenance: ${{ env.PROVENANCE_ENABLED == 'true' }}
+          sbom: ${{ env.SBOM_ENABLED == 'true' }}
+
+      - name: Save digest (${{ matrix.name }})
+        run: echo "${{ steps.build_image.outputs.digest }}" > digest-${{ matrix.name }}.txt
+
+      - name: Upload digest artifact (${{ matrix.name }})
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ matrix.name }}
+          path: digest-${{ matrix.name }}.txt
+          retention-days: 7
+          if-no-files-found: error
+
+  collect-digests:
+    needs: [prep, build]
+    runs-on: ubuntu-latest
+    outputs:
+      api_digest: ${{ steps.expose.outputs.api_digest }}
+      web_digest: ${{ steps.expose.outputs.web_digest }}
+    steps:
+      - name: Download digest artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: digests-*
+          merge-multiple: true
+          path: digests
+
+      - name: Expose digests
+        id: expose
+        run: |
+          api_file="digests/digest-api.txt"
+          web_file="digests/digest-web.txt"
+          if [[ ! -f "$api_file" || ! -f "$web_file" ]]; then
+            echo "Missing digest artifacts" >&2
+            exit 1
+          fi
+          echo "api_digest=$(cat "$api_file")" >> "$GITHUB_OUTPUT"
+          echo "web_digest=$(cat "$web_file")" >> "$GITHUB_OUTPUT"
+
+  scan:
+    needs: [prep, collect-digests]
+    if: needs.prep.outputs.push_enabled == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork != true)
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY: ${{ needs.prep.outputs.registry }}
+      OWNER_LOWER: ${{ needs.prep.outputs.owner_lower }}
+      TRIVY_CACHE_DIR: /tmp/trivy
+      TRIVY_DB_CACHE_KEY: v1
+      TRIVY_WEEK: ${{ needs.prep.outputs.trivy_week }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: api
+            image: infamous-freight-api
+          - name: web
+            image: infamous-freight-web
+
+    steps:
+      - name: Cache Trivy DB
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TRIVY_CACHE_DIR }}
+          key: trivy-db-${{ runner.os }}-${{ env.TRIVY_DB_CACHE_KEY }}-${{ env.TRIVY_WEEK }}
+          restore-keys: |
+            trivy-db-${{ runner.os }}-${{ env.TRIVY_DB_CACHE_KEY }}-
+            trivy-db-${{ runner.os }}-
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork != true
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve digest
+        id: digest
+        run: |
+          case "${{ matrix.name }}" in
+            api) digest="${{ needs.collect-digests.outputs.api_digest }}" ;;
+            web) digest="${{ needs.collect-digests.outputs.web_digest }}" ;;
+            *) echo "Unknown image ${{ matrix.name }}" >&2; exit 1 ;;
+          esac
+          if [ -z "$digest" ]; then
+            echo "Digest missing for ${{ matrix.name }}" >&2
+            exit 1
+          fi
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+
+      - name: Scan image (${{ matrix.name }})
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.OWNER_LOWER }}/${{ matrix.image }}@${{ steps.digest.outputs.digest }}
+          format: table
+          exit-code: 1
+          severity: HIGH,CRITICAL
