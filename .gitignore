@@ -23,3 +23,7 @@ prisma/dev.db
 
 # macOS
 .DS_Store
+
+# Editor
+.vscode/
+\#\# GitHub Copilot Chat.md

@@ -1,0 +1,313 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  color: #f9fafb;
+}
+
+.heading {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.muted {
+  color: rgba(249, 250, 251, 0.75);
+}
+
+.loadingCard,
+.completeCard {
+  padding: 1rem;
+  border-radius: 12px;
+}
+
+.loadingCard {
+  text-align: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.completeCard {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #e7fff5;
+}
+
+.progressBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.progressMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: rgba(249, 250, 251, 0.8);
+}
+
+.progressTrack {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progressValue {
+  height: 100%;
+  background: linear-gradient(90deg, #ffcc33, #ff3366);
+  width: 0;
+  border-radius: 999px;
+  transition: width 160ms ease;
+}
+
+.tipCard {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tipTitle {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+}
+
+.tipList {
+  margin: 0.35rem 0 0.75rem;
+  padding-left: 1.2rem;
+  color: rgba(249, 250, 251, 0.85);
+}
+
+.buttonPrimary {
+  background: linear-gradient(135deg, #ffcc33, #ff3366);
+  color: #050509;
+  border: none;
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.buttonPrimary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgba(255, 51, 102, 0.25);
+}
+
+.buttonSecondary {
+  background: rgba(255, 255, 255, 0.12);
+  color: #f9fafb;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+  cursor: pointer;
+  transition: border-color 150ms ease, transform 120ms ease;
+}
+
+.buttonSecondary:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+.listStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stepRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.badge {
+  min-width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.badgeComplete {
+  background: #10b981;
+  color: #052e16;
+}
+
+.splitGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.inputRow {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.input {
+  flex: 1;
+  min-width: 240px;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #0b0b12;
+  color: #f9fafb;
+}
+
+.shareRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.8rem;
+}
+
+.statCard {
+  padding: 0.85rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.statLabel {
+  margin: 0 0 0.25rem;
+  font-size: 0.85rem;
+  color: rgba(249, 250, 251, 0.7);
+}
+
+.statValue {
+  margin: 0;
+  font-size: 1.7rem;
+  font-weight: 700;
+}
+
+.rewardTier {
+  padding: 0.85rem;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.rewardTierActive {
+  border-color: rgba(16, 185, 129, 0.6);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.tableWrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 0.55rem 0.35rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.table th {
+  color: rgba(249, 250, 251, 0.7);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.table td {
+  color: #f9fafb;
+  font-size: 0.9rem;
+}
+
+.statusChip {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.statusChipSuccess {
+  background: rgba(16, 185, 129, 0.16);
+  color: #a7f3d0;
+}
+
+.statusChipPending {
+  background: rgba(251, 191, 36, 0.14);
+  color: #fcd34d;
+}
+
+.featureRow {
+  margin-bottom: 0.75rem;
+}
+
+.featureBar {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.featureFill {
+  height: 100%;
+  background: linear-gradient(90deg, #7c3aed, #22d3ee);
+  width: 0;
+  transition: width 160ms ease;
+}
+
+.meta {
+  text-align: center;
+  color: rgba(249, 250, 251, 0.65);
+  font-size: 0.8rem;
+}
+
+.capitalize {
+  text-transform: capitalize;
+}
+
+.buttonIcon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.alertBanner {
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.12);
+  color: #fecdd3;
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  font-weight: 600;
+}
